@@ -17,7 +17,7 @@ class AuthController extends Controller
 {
     /**
      * @OA\Post(
-     *     path="/api/login",
+     *     path="/api/auth/login",
      *     summary="User login and get API token",
      *     description="Authenticates a user and returns an API token",
      *     operationId="userLogin",
@@ -106,7 +106,7 @@ class AuthController extends Controller
     }
     /**
      * @OA\Post(
-     *     path="/api/logout",
+     *     path="/api/auth/logout",
      *     summary="User logout",
      *     description="Logs out the user by invalidating all their tokens",
      *     operationId="userLogout",
