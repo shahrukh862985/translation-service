@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ExportTranslationsController;
 use App\Http\Controllers\TranslationsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -15,4 +16,5 @@ Route::group(['prefix' => 'auth'], function () {
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
   Route::apiResource('translations', TranslationsController::class);
+  Route::get('export/translations/{locale?}', [ExportTranslationsController::class, 'export']);
 });

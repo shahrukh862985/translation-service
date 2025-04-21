@@ -12,6 +12,7 @@ use App\Models\Translation;
 use App\Repositories\LanguageRepository;
 use App\Repositories\TagRepository;
 use App\Repositories\TranslationRepository;
+use App\Services\ExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\ItemNotFoundException;
 
@@ -20,12 +21,19 @@ class TranslationsController extends Controller
     protected $translationRepository;
     protected $tagRepository;
     protected $langRepository;
+    protected $exportService;
 
-    public function __construct(TranslationRepository $translationRepository, TagRepository $tagRepository, LanguageRepository $langRepository)
-    {
+
+    public function __construct(
+        TranslationRepository $translationRepository,
+        TagRepository $tagRepository,
+        LanguageRepository $langRepository,
+        ExportService $exportService
+    ) {
         $this->langRepository = $langRepository;
         $this->translationRepository = $translationRepository;
         $this->tagRepository = $tagRepository;
+        $this->exportService = $exportService;
     }
     /**
      * @OA\Get(
@@ -254,11 +262,17 @@ class TranslationsController extends Controller
                 }
             }
             $language = $this->langRepository->findOrFail($request->input('locale'));
-            $translationFields = array_merge(['language_id' => $language->id], $request->only(['key', 'content']));
             $translation = $this->translationRepository->create(
-                $translationFields,
+                [
+                    'key' => trim(strtolower($request->input('key'))),
+                    'content' => $request->input('content'),
+                    'language_id' => $language->id,
+                ],
                 $tagIds
             );
+            // Invalidate cache
+            $this->exportService->invalidateCache($request->input('locale'));
+
             return new TranslationResource($translation);
         } catch (ItemNotFoundException $e) {
             return response()->json(['status' => false, 'message' => $e->getMessage()], 404);
@@ -428,14 +442,23 @@ class TranslationsController extends Controller
                     $tagIds[] = $tag->id;
                 }
             }
-
+            $oldTranslationObj = $this->translationRepository->find($id);
             $language = $this->langRepository->findOrFail($request->input('locale'));
-            $translationFields = array_merge(['language_id' => $language->id], $request->only(['key', 'content']));
             $translation = $this->translationRepository->update(
                 $id,
-                $translationFields,
+                [
+                    'key' => trim(strtolower($request->input('key'))),
+                    'content' => $request->input('content'),
+                    'language_id' => $language->id,
+                ],
                 $tagIds
             );
+
+            // Invalidate cache for both old and new locale if changed
+            $this->exportService->invalidateCache($oldTranslationObj->language->code);
+            if ($oldTranslationObj->language->code !== $translation->language->code) {
+                $this->exportService->invalidateCache($translation->language->code);
+            }
 
             return new TranslationResource($translation);
         } catch (ItemNotFoundException $e) {
@@ -496,7 +519,7 @@ class TranslationsController extends Controller
         $translation->delete();
 
         // Invalidate cache
-        $this->translationRepository->invalidateCache($locale);
+        $this->exportService->invalidateCache($locale);
 
         return response()->json(['message' => 'Translation deleted successfully']);
     }

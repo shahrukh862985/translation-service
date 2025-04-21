@@ -216,6 +216,105 @@
                 ]
             }
         },
+        "/api/export/translations/{locale?}": {
+            "get": {
+                "tags": [
+                    "Export Translations"
+                ],
+                "summary": "Export translations",
+                "description": "Exports translations for a specific locale or all locales",
+                "operationId": "exportTranslations",
+                "parameters": [
+                    {
+                        "name": "locale",
+                        "in": "path",
+                        "description": "Language locale code (optional - if not provided, all translations will be exported)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "en"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "description": "Exported translations data",
+                                            "type": "object",
+                                            "example": {
+                                                "en": {
+                                                    "welcome": "Welcome to our application",
+                                                    "homepage.greeting": "Hello, user!",
+                                                    "common.buttons.save": "Save"
+                                                },
+                                                "fr": {
+                                                    "welcome": "Bienvenue à notre application",
+                                                    "homepage.greeting": "Bonjour, utilisateur!",
+                                                    "common.buttons.save": "Enregistrer"
+                                                }
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "processing_time_ms": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 153.67
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Locale not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The requested locale does not exist"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/translations": {
             "get": {
                 "tags": [
@@ -1032,6 +1131,10 @@
         {
             "name": "Authentication",
             "description": "Authentication"
+        },
+        {
+            "name": "Export Translations",
+            "description": "Export Translations"
         },
         {
             "name": "Translations",
